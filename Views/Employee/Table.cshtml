@@ -1,0 +1,48 @@
+@model IEnumerable<Employee>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>RFC</th>
+            <th>Fecha de Nacimiento</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var employee in Model)
+        {
+            <tr>
+                <td>@employee.ID</td>
+                <td>@employee.Name</td>
+                <td>@employee.LastName</td>
+                <td>@employee.RFC</td>
+                <td>@employee.BornDate</td>
+                <td>
+                    @switch (employee.Status)
+                    {
+                        case EmployeeStatus.Active:
+                            <span>Activo</span>
+                            break;
+                        case EmployeeStatus.Inactive:
+                            <span>Inactivo</span>
+                            break;
+                        default:
+                            <span>Sin definir</span>
+                            break;
+                    }
+                </td>
+                <td>
+                    <a href="@Url.Action("Update", new { id = employee.ID })" class="btn btn-primary">Editar</a>
+                    <form method="post" action="@Url.Action("Delete", new { id = employee.ID })"
+                        onsubmit="return confirm('¿Estás seguro de que deseas eliminar este empleado?');">
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "cXp/n1+FPQGlQ6QMs0optnyNj6lx/NkaVNz+3FPIdufXskLxEADgcNdOruQ9TXaCL3xR/nswGZJY3aEPF3/Ofg==",
+  "success": true,
+  "projectFilePath": "/home/mike/Documents/MtechSystemTest/MtechSystemTest.csproj",
+  "expectedPackageFiles": [
+    "/home/mike/.nuget/packages/newtonsoft.json/13.0.3/newtonsoft.json.13.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

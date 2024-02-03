@@ -1,0 +1,225 @@
+
+@using Newtonsoft.Json
+@model Employee
+
+@{
+    var employeeData = JsonConvert.SerializeObject(ViewBag.EmployeeJSON);
+    Console.WriteLine(employeeData);
+}
+
+@using (Html.BeginForm("Create", "Employee", FormMethod.Post, new { id = "add-employee-form" }))
+{
+    @Html.AntiForgeryToken()
+
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+    <div>
+        @Html.TextBoxFor(x => x.Name, new { @class = "form-control", placeholder = "Name", id = "name" })
+        @Html.ValidationMessageFor(x => x.Name, null, new { @class = "text-danger" })
+    </div>
+
+    <div>
+        @Html.TextBoxFor(x => x.LastName, new { @class = "form-control", placeholder = "Last Name", id = "lastName" })
+        @Html.ValidationMessageFor(x => x.LastName, null, new { @class = "text-danger" })
+    </div>
+
+    <div>
+        @Html.TextBoxFor(x => x.RFC, new { @class = "form-control", placeholder = "RFC", id = "rfc" })
+        @Html.ValidationMessageFor(x => x.RFC, null, new { @class = "text-danger" })
+    </div>
+
+    <div>
+        @Html.TextBoxFor(x => x.BornDate, new { @class = "form-control", type = "date", placeholder = "Date of Birth", id = "bornDate" })
+    </div>
+
+    <div>
+        @Html.DropDownListFor(x => x.Status, new List<SelectListItem>
+        {
+            new SelectListItem { Text = "Active", Value = "Active" },
+            new SelectListItem { Text = "Inactive", Value = "Inactive" },
+            new SelectListItem { Text = "NotSet", Value = "NotSet" }
+        }, new { @class = "form-control", id = "status" })
+
+    </div>
+
+    <div style="padding-top:10px;">
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+}
+
+<br>
+
+@{
+    ViewData["Title"] = "Employee Management";
+}
+
+<h1>Employee Management</h1>
+
+<table id="EmployeesTable" class="table display">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Last Name</th>
+            <th>RFC</th>
+            <th>Date of Birth</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody id="employee-table-data">
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var storedDataJSON = localStorage.getItem("employees");
+            var employees = storedDataJSON ? JSON.parse(storedDataJSON) : [];
+
+            $('#EmployeesTable').DataTable({
+                data: employees,
+                columns: [
+                    { data: 'ID' },
+                    { data: 'Name' },
+                    { data: 'LastName' },
+                    { data: 'RFC' },
+                    { data: 'BornDate' },
+                    { data: 'Status' },
+                    {
+                        data: null,
+                        render: function (data, type, row) {
+                            return'<button onclick="deleteEmployee(' + data.ID + ')" class="btn btn-danger">Delete</button>';
+                        }
+                    }
+                ],
+                createdRow: function (row, data, dataIndex) {
+                    $(row).attr('id', 'employee-row-' + data.ID);
+                }
+            });
+        });
+
+        function isRFCUnique(newRFC) {
+            var storedDataJSON = localStorage.getItem("employees");
+            if (storedDataJSON) {
+                var employees = storedDataJSON ? JSON.parse(storedDataJSON) : [];
+                var isUnique = true;
+
+                employees.forEach(function (employee) {
+                    if (employee.RFC === newRFC) {
+                        isUnique = false;
+                        return false;
+                    }
+                });
+
+                if (!isUnique) {
+                    alert("Error: The RFC already exists");
+                    return false;
+                }
+
+                // Validar el RFC aquí
+                var rfcRegex = /^[A-Z]{4}\d{6}[A-Z0-9]{3}$/;
+                if (!rfcRegex.test(newRFC)) {
+                       alert("Error: Please enter a valid RFC. Example: AAAA000000AAA");
+                    return false;
+                }
+                return true;
+            }
+            return true;
+        }
+
+        var localStorageData = localStorage.getItem('employees');
+        var employees = localStorageData ? JSON.parse(localStorageData) : [];
+
+        var tableBody = document.getElementById('employee-table-data');
+        employees.forEach(function (employee) {
+            var row = document.createElement('tr');
+            row.innerHTML = '<td>' + employee.ID + '</td>' +
+                '<td>' + employee.Name + '</td>' +
+                '<td>' + employee.LastName + '</td>' +
+                '<td>' + employee.RFC + '</td>' +
+                '<td>' + employee.BornDate + '</td>' +
+                '<td>' + employee.Status + '</td>' +
+                '<td>' +
+                '<button class="btn btn-danger " onclick="deleteEmployee(' + employee.ID + ')">Delete</button>' +
+                '</td>';
+
+            row.id = 'employee-row-' + employee.ID;
+            tableBody.appendChild(row);
+        });
+
+        function deleteEmployee(id) {
+            var index = employees.findIndex(function (employee) {
+                return employee.ID === id;
+            });
+
+            if (index !== -1) {
+                employees.splice(index, 1);
+
+                var employeesJson = JSON.stringify(employees);
+                localStorage.setItem('employees', employeesJson);
+
+                var row = document.getElementById('employee-row-' + id);
+                row.remove();
+            }
+        }
+
+        function editEmployee(id) {
+            var employee = employees.find(function (employee) {
+                return employee.ID === id;
+            });
+
+            if (employee) {
+                document.getElementById('name').value = employee.Name;
+                document.getElementById('lastName').value = employee.LastName;
+                document.getElementById('rfc').value = employee.RFC;
+                document.getElementById('bornDate').value = employee.BornDate;
+                document.getElementById('status').value = employee.Status;
+
+                var employeesJson = JSON.stringify(employees);
+                localStorage.setItem('employees', employeesJson);
+            }
+        }
+
+        document.getElementById('add-employee-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            var name = document.getElementById('name').value;
+            var lastName = document.getElementById('lastName').value;
+            var rfc = document.getElementById('rfc').value;
+            var bornDate = document.getElementById('bornDate').value;
+            var status = document.getElementById('status').value;
+
+            
+            var rfcUnique = isRFCUnique(rfc);
+            if (!rfcUnique) {
+                return;
+            }
+
+            var newEmployee = {
+                ID: employees.length + 1,
+                Name: name,
+                LastName: lastName,
+                RFC: rfc,
+                BornDate: bornDate,
+                Status: status
+            };
+
+            employees.push(newEmployee);
+            var employeesJson = JSON.stringify(employees);
+            localStorage.setItem('employees', employeesJson);
+
+            var row = document.createElement('tr');
+            row.id = 'employee-row-' + newEmployee.ID;
+            row.innerHTML = '<td>' + newEmployee.ID + '</td>' +
+                '<td>' + newEmployee.Name + '</td>' +
+                '<td>' + newEmployee.LastName + '</td>' +
+                '<td>' + newEmployee.RFC + '</td>' +
+                '<td>' + newEmployee.BornDate + '</td>' +
+                '<td>' + newEmployee.Status + '</td>' +
+                '<td>' +
+                '<button class="btn btn-danger " onclick="deleteEmployee(' + newEmployee.ID + ')">Delete</button>' +
+                '</td>';
+            tableBody.appendChild(row);
+        });
+    </script>
+}
